@@ -10,7 +10,7 @@ def handle_client(conn, addr: tuple):
     print(f"[NEW CONNECTION] {addr} connected." )
 
     while True:
-
+        # TODO Handshake (HTTP Upgrade)
         client_msg = conn.recv_msg()
 
         if not client_msg: break
