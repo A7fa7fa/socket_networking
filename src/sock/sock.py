@@ -65,7 +65,9 @@ class MySocket:
             return None
         # Then retrieve a message of length `raw_msglen`
         # this will be the actual message
-        msglen = self.len_frombytes(raw_msglen)
+        msglen = self.decode_msg(raw_msglen)
+        if not msglen:
+            return None
         return self.decode_msg(self.recvall(msglen))
 
 
@@ -73,11 +75,16 @@ class MySocket:
         """Get a message of a certain length from the socket stream"""
 
         data = bytearray()
-        while len(data) < length:
-            packet = self.sock.recv(length - len(data))
-            if not packet:
-                return None
-            data.extend(packet)
+        while len(data) < int(length): # check if still connected or in try/expet
+            try:
+                packet = self.sock.recv(int(length) - len(data))
+                if not packet:
+                    return None
+                data.extend(packet)
+            except Exception as e:
+                print(e)
+                return None    
+
         return data
 
 
@@ -89,9 +96,11 @@ class MySocket:
 
     def len_frombytes(self, bmsg) -> int:
         """returns length of bytearray ´bmsg´ as integer"""
-
-        return int.from_bytes(bmsg, byteorder='big')
-    
+        try:
+            return int.from_bytes(bmsg, byteorder='big')
+        except Exception as e:
+            print(e)
+            return None
 
     def add_msg_header(self, msg:bytes) -> bytes:
         """add header to msg. header tells the msg size in bytes """
@@ -107,5 +116,5 @@ class MySocket:
 
     def decode_msg(self, msg:bytes) -> str:
         """convert the bytes ´msg´ to str"""
-        
+
         return msg.decode(encoding=FORMAT,errors='strict')

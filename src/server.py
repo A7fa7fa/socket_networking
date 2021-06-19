@@ -13,7 +13,9 @@ def handle_client(conn, addr: tuple):
         # TODO Handshake (HTTP Upgrade)
         client_msg = conn.recv_msg()
 
-        if not client_msg: break
+        if not client_msg: 
+            print('no message')
+            break
 
         print(f"recived data {client_msg}")
 
