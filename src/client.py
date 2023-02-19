@@ -21,6 +21,6 @@ def test_client_run():
 
     print(f"recived data {server_msg}")
 
-
-test_client_run()
+if __name__ == '__main__':
+    test_client_run()
 

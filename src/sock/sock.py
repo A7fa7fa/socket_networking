@@ -6,7 +6,7 @@ from sock.address import __initserverhost
 import threading
 
 
-# the first ´BYTE_COUNT´ of msg recieved or send are the length of msg
+# the first `BYTE_COUNT` of msg recieved or send are the length of msg
 BYTE_COUNT = 4
 
 # local IPV4 Adress
@@ -65,7 +65,7 @@ class MySocket:
             return None
         # Then retrieve a message of length `raw_msglen`
         # this will be the actual message
-        msglen = self.decode_msg(raw_msglen)
+        msglen = self.len_frombytes(raw_msglen)
         if not msglen:
             return None
         return self.decode_msg(self.recvall(msglen))
@@ -89,13 +89,12 @@ class MySocket:
 
 
     def len_inbytes(self, msg) -> bytes:
-        """returns length of bytearray ´bmsg´ as byte"""
-
+        """returns length of bytearray `bmsg` as byte"""
         return len(msg).to_bytes(BYTE_COUNT, byteorder='big')
 
 
-    def len_frombytes(self, bmsg) -> int:
-        """returns length of bytearray ´bmsg´ as integer"""
+    def len_frombytes(self, bmsg:bytearray) -> int:
+        """returns length of bytearray `bmsg` as integer"""
         try:
             return int.from_bytes(bmsg, byteorder='big')
         except Exception as e:
@@ -109,12 +108,12 @@ class MySocket:
 
 
     def encode_msg(self, msg:str) -> bytes:
-        """convert the str ´msg´ to bytes"""
+        """convert the str `msg` to bytes"""
 
         return json.dumps(msg).encode(encoding=FORMAT,errors='strict')
 
 
-    def decode_msg(self, msg:bytes) -> str:
-        """convert the bytes ´msg´ to str"""
+    def decode_msg(self, msg:bytearray) -> str:
+        """convert the bytes `msg` to str"""
 
         return msg.decode(encoding=FORMAT,errors='strict')

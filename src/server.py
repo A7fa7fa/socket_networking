@@ -35,13 +35,9 @@ def server():
     #bind it to the public interface
     server.sock.bind(ADDR)
 
-
-    # Enable a server to accept connections. 
-    # If backlog is specified, it must be at least 0 (if it is lower, it is set to 0); 
-    # it specifies the number of unaccepted connections that the system will allow before refusing new connections. 
-    # If not specified, a default reasonable value is chosen.
-    # The backlog parameter is now optional.
-    server.sock.listen(5)
+    MAX_CONNECTIONS = 5
+    server.sock.listen(MAX_CONNECTIONS)
+    
     print(f'[SERVER] is listening on {ADDR}')
     
     while True:
@@ -54,5 +50,5 @@ def server():
         
         print(f"ACTIVE CONNECTIONS {threading.active_count() -1}")
 
-
-server()
+if __name__ == '__main__':
+    server()
