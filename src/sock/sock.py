@@ -1,9 +1,8 @@
 import socket
 import json
-from uuid import uuid4
-from sock.address import __initserverhost
-
-import threading
+# from sock.address import __initserverhost
+from sock.converter import decode_msg, encode_msg
+from sock.header import len_frombytes, len_inbytes
 
 
 # the first `BYTE_COUNT` of msg recieved or send are the length of msg
@@ -12,7 +11,7 @@ BYTE_COUNT = 4
 # local IPV4 Adress
 SERVER = socket.gethostbyname(socket.gethostname())
 # external IPV4 Adress
-#SERVER = __initserverhost()
+# SERVER = __initserverhost()
 
 PORT = 5051
 
@@ -22,22 +21,18 @@ ADDR = (SERVER, PORT)
 # decrypt/encrypt msg in this format
 FORMAT = 'UTF-8'
 
+
 class MySocket:
-    """my first try of a socket class
-    probaly not very efficient and there are better ways to do it
-    but it works
-    """
+    """simple socket wrapper"""
 
-
-    def __init__(self, sock=None):
+    def __init__(self, sock=None) -> None:
         if sock is None:
             self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         else:
             self.sock = sock
 
-
-    def connect(self, addr):
+    def connect(self, addr) -> bool:
         try:
             self.sock.connect(addr)
             return True
@@ -45,37 +40,38 @@ class MySocket:
             print(e)
             return False
 
+    def send_msg(self, msg: dict) -> None:
+        """Send a json message via the socket."""
 
-    def send_msg(self, msg):
-        """Send a message via the socket."""
+        encoded_msg = encode_msg(FORMAT, json.dumps(msg))
+        header = len_inbytes(encoded_msg, BYTE_COUNT)
+        msg = self.__add_msg_header(header, encoded_msg)
 
-        # add header msg_length to msg before sending
-        msg = self.add_msg_header(self.encode_msg(msg))
         self.sock.sendall(msg)
 
-
-    def recv_msg(self) -> str:
+    def recieve_msg(self) -> str:
         """Receive a message via the socket."""
-        
-        # start by getting the header (which is an int of length `BYTE_COUNT`). 
-        # The header tells the message size in bytes.
-        raw_msglen = self.recvall(BYTE_COUNT)
 
-        if not raw_msglen:
+        raw_msg_len = self.__read_header()
+
+        if not raw_msg_len:
             return None
-        # Then retrieve a message of length `raw_msglen`
-        # this will be the actual message
-        msglen = self.len_frombytes(raw_msglen)
-        if not msglen:
+
+        msg_body_len = len_frombytes(raw_msg_len)
+        if not msg_body_len:
             return None
-        return self.decode_msg(self.recvall(msglen))
+        raw_msg = self.__recieve_certain_msg_len(msg_body_len)
+        return decode_msg(FORMAT, raw_msg)
 
+    def __read_header(self) -> bytearray:
+        """The header tells the message size in bytes. Header is of length `BYTE_COUNT`)"""
+        return self.__recieve_certain_msg_len(BYTE_COUNT)
 
-    def recvall(self, length) -> bytearray:
+    def __recieve_certain_msg_len(self, length) -> bytearray:
         """Get a message of a certain length from the socket stream"""
 
         data = bytearray()
-        while len(data) < int(length): # check if still connected or in try/expet
+        while len(data) < int(length):  # check if still connected or in try/expet
             try:
                 packet = self.sock.recv(int(length) - len(data))
                 if not packet:
@@ -83,37 +79,11 @@ class MySocket:
                 data.extend(packet)
             except Exception as e:
                 print(e)
-                return None    
+                return None
 
         return data
 
+    def __add_msg_header(self, header: bytes, msg: bytes) -> bytes:
+        """combines header and msg """
 
-    def len_inbytes(self, msg) -> bytes:
-        """returns length of bytearray `bmsg` as byte"""
-        return len(msg).to_bytes(BYTE_COUNT, byteorder='big')
-
-
-    def len_frombytes(self, bmsg:bytearray) -> int:
-        """returns length of bytearray `bmsg` as integer"""
-        try:
-            return int.from_bytes(bmsg, byteorder='big')
-        except Exception as e:
-            print(e)
-            return None
-
-    def add_msg_header(self, msg:bytes) -> bytes:
-        """add header to msg. header tells the msg size in bytes """
-
-        return self.len_inbytes(msg) + msg
-
-
-    def encode_msg(self, msg:str) -> bytes:
-        """convert the str `msg` to bytes"""
-
-        return json.dumps(msg).encode(encoding=FORMAT,errors='strict')
-
-
-    def decode_msg(self, msg:bytearray) -> str:
-        """convert the bytes `msg` to str"""
-
-        return msg.decode(encoding=FORMAT,errors='strict')
+        return header + msg
