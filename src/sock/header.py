@@ -1,12 +1,12 @@
-def len_inbytes(msg: str, length: int) -> bytes:
-    """returns length of bytearray `bmsg` as byte"""
-    return len(msg).to_bytes(length, byteorder='big')
+def int_to_bytes(num: int, length: int) -> bytes:
+    """returns length of `msg` as byte array of size `length`"""
+    return int(num).to_bytes(length, byteorder='big')
 
 
-def len_frombytes(bmsg: bytearray) -> int:
-    """returns length of bytearray `bmsg` as integer"""
+def bytes_to_int(msg: bytearray) -> int:
+    """converts bytearray `msg` to integer"""
     try:
-        return int.from_bytes(bmsg, byteorder='big')
+        return int.from_bytes(msg, byteorder='big')
     except Exception as e:
         print(e)
         return None

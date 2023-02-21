@@ -2,7 +2,7 @@ import socket
 import json
 # from sock.address import __initserverhost
 from sock.converter import decode_msg, encode_msg
-from sock.header import len_frombytes, len_inbytes
+from sock.header import bytes_to_int, int_to_bytes
 
 
 # the first `BYTE_COUNT` of msg recieved or send are the length of msg
@@ -44,7 +44,7 @@ class MySocket:
         """Send a json message via the socket."""
 
         encoded_msg = encode_msg(FORMAT, json.dumps(msg))
-        header = len_inbytes(encoded_msg, BYTE_COUNT)
+        header = int_to_bytes(len(encoded_msg), BYTE_COUNT)
         msg = self.__add_msg_header(header, encoded_msg)
 
         self.sock.sendall(msg)
@@ -57,7 +57,7 @@ class MySocket:
         if not raw_msg_len:
             return None
 
-        msg_body_len = len_frombytes(raw_msg_len)
+        msg_body_len = bytes_to_int(raw_msg_len)
         if not msg_body_len:
             return None
         raw_msg = self.__recieve_certain_msg_len(msg_body_len)
